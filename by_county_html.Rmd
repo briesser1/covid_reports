@@ -1,0 +1,453 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r load data}
+library(readr)
+library(tidyverse)
+library(readxl)
+library(zoo)
+library(ggthemes)
+library(extrafont)
+library(patchwork)
+library(kableExtra)
+
+lenged_font_size <- 7
+
+loadfonts(device = "win")
+
+
+cc <- read_csv("data_world_download/COVID-19 Activity.csv",
+col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
+PEOPLE_POSITIVE_CASES_COUNT = col_number(),
+PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),
+PEOPLE_DEATH_COUNT = col_number(),
+PEOPLE_DEATH_NEW_COUNT = col_number()))
+
+# cc <- read_csv("data_world_download/COVID-19 Activity.csv",
+#     col_types = cols(county_name = col_character(),
+#         county_fips_number = col_character(),
+#         people_positive_cases_count = col_number(),
+#         report_date = col_date(format = "%Y-%m-%d"),
+#         people_death_new_count = col_number(),
+#         people_positive_new_cases_count = col_number(),
+#         people_death_count = col_number()))
+
+
+
+date_of_data <- format(max(cc$report_date, "%d-%b-%Y"))
+caption1 <- paste("Data updated on ", date_of_data, sep = "") 
+```
+
+```{r run code}
+
+# Create pallet and color look up -----------------------------------------
+soi <- c("Brunswick, North Carolina, US",
+         "Richland, South Carolina, US",
+         "Clark, Ohio, US",
+         "Licking, Ohio, US",
+         "Durham, North Carolina, US",
+         "Chesterfield, Virginia, US",
+         "Greenville, South Carolina, US", 
+         "Forsyth, North Carolina, US", 
+         "Charleston, South Carolina, US", 
+         "Horry, South Carolina, US")
+
+# soi <- c("Los Angeles, California", "Wake, North Carolina")
+
+
+soi <- sort(soi)
+
+n_of_soi <- length(soi)
+pallet <-   paletteer::paletteer_d("basetheme::void", n = n_of_soi)
+pallet <- as.character(pallet)
+
+soi <- data.frame(soi, pallet, stringsAsFactors = FALSE)
+
+
+
+# create final table to run charts ----------------------------------------
+
+
+pop_lookup <- read_rds(here::here("population_lookup.rds"))
+
+
+soi_table <- cc %>%
+  select(Date = REPORT_DATE,
+         Admin2 = COUNTY_NAME,
+         Province_State = PROVINCE_STATE_NAME,
+         COUNTRY_SHORT_NAME,
+         country_code = COUNTRY_ALPHA_2_CODE,
+         CONTINENT_NAME,
+         Cases = PEOPLE_POSITIVE_CASES_COUNT,
+         Difference = PEOPLE_POSITIVE_NEW_CASES_COUNT,
+         Deaths = PEOPLE_DEATH_NEW_COUNT,
+         Cumulative_Deaths = PEOPLE_DEATH_COUNT,
+         ) %>%
+  mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%
+  left_join(pop_lookup, by = "Combined_Key") %>%
+  filter(Combined_Key %in% soi$soi)  %>%
+  mutate(infection_Rate = (Cases/Population_Count)*100000)
+
+# soi_table <- cc %>%
+#   select(Date = report_date,
+#          Admin2 = county_name,
+#          Province_State = province_state_name,
+#          country_short_name,
+#          country_code = country_alpha_2_code,
+#          continent_name,
+#          Cases = people_positive_cases_count,
+#          Difference = people_positive_new_cases_count,
+#          Deaths = people_death_new_count,
+#          Cumulative_Deaths = people_death_count,
+#          ) %>%
+#   mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%
+#   left_join(pop_lookup, by = "Combined_Key") %>%
+#   filter(Combined_Key %in% soi$soi)  %>%
+#   mutate(infection_Rate = (Cases/Population_Count)*100000)
+
+
+
+
+
+
+# create charts -----------------------------------------------------------
+
+
+# PLOT MOVING AVERAGE OF NEW CASES
+#create color table
+soi_per_new_colors <- soi_table %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>%  
+  distinct(Combined_Key, pallet) %>%  
+  arrange(Combined_Key)
+
+jColors <- soi_per_new_colors$pallet
+names(jColors) <- soi_per_new_colors$Combined_Key
+
+
+rm(pallet, n_of_soi)
+
+tmax <- max(soi_table$Difference, na.rm = TRUE) - (max(soi_table$Difference, na.rm = TRUE)*.7)
+  
+#create chart for moving average
+soi_per_new <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>% 
+  ggplot(aes(x = Date, y = Difference)) + 
+  geom_smooth(aes(colour = Combined_Key ), size = 1.25, se = FALSE) +
+  scale_colour_manual(values =  jColors) +
+  theme_clean() +
+  theme(legend.position = "bottom",
+        text = element_text(family = "Times New Roman"),
+        legend.text=element_text(size= lenged_font_size)) + 
+  labs(title = "Daily New Cases -  \"loess\" smoothing", 
+       subtitle = "LOESS = Local weighted regression",
+       y = "Number of cases per day", 
+       colour = "") + 
+  facet_wrap(~Province_State, nrow = 2)
+
+soi_per_new_actual <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>% 
+  ggplot(aes(x = Date, y = Difference)) + 
+  geom_line(aes(x = Date, y = Difference, colour = Combined_Key)) +
+  scale_colour_manual(values =  jColors) +
+  ylim(0,300) +
+  theme_clean() +
+  theme(legend.position = "bottom",
+        text = element_text(family = "Times New Roman"),
+        legend.text=element_text(size= lenged_font_size)) + 
+  labs(title = "Daily New Cases", 
+       y = "Number of cases per day", 
+       caption = "*Dotted line is actual new cases per day",
+       colour = "") + 
+  facet_wrap(~Province_State, nrow = 2)
+
+
+
+
+
+# CUMULATIVE CASES
+#create color table    
+soi_per_total_colors <- soi_table %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>%
+  distinct(Combined_Key, pallet) %>%  
+  arrange(Combined_Key)
+
+jColors2 <- soi_per_total_colors$pallet
+names(jColors2) <- soi_per_total_colors$Combined_Key
+
+soi_per_total <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  ggplot() + 
+  geom_col(aes(x = Date, y = Cases, fill = Combined_Key)) +
+  scale_fill_manual(values =  jColors2) +
+  theme_clean() +
+  theme(legend.position = "none",
+        text = element_text(family = "Times New Roman")) + 
+  labs(title = "Cumulative Cases", 
+       y = "", 
+       fill = "",
+       caption = caption1 )  
+
+
+# PLOT infection rate
+#create color table
+soi_per_ir_colors <- soi_table %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>%  
+  distinct(Combined_Key, pallet) %>%  
+  arrange(Combined_Key)
+
+jColors_ir <- soi_per_ir_colors$pallet
+names(jColors_ir) <- soi_per_ir_colors$Combined_Key
+
+
+#create chart infection rates
+soi_per_ir <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>% 
+  ggplot(aes(x = Date, y = infection_Rate)) + 
+  geom_line(aes(colour = Combined_Key), size = 1.25) + 
+  scale_colour_manual(values =  jColors_ir) +
+  theme_clean() +
+  theme(legend.position = "bottom",
+        text = element_text(family = "Times New Roman"),
+        legend.text=element_text(size= lenged_font_size)) + 
+  labs(title = "Number of Cumulative Cases per 100,000 people", 
+       y = "Number of cases per day", 
+       colour = "") + 
+  facet_wrap(~Province_State, nrow = 2)
+
+
+
+# running fatalities
+#create color table    
+soi_per_deaths_colors <- soi_table %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>%  
+  distinct(Combined_Key, pallet) %>%  
+  arrange(Combined_Key)
+
+jColors3 <- soi_per_deaths_colors$pallet
+names(jColors3) <- soi_per_deaths_colors$Combined_Key
+
+#create color chart  
+soi_per_new_deaths <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  ggplot(aes(x = Date, y = Deaths, colour = Combined_Key)) + 
+  geom_smooth(se = FALSE) + 
+  scale_colour_manual(values =  jColors3) +
+  theme_clean() +
+  theme(legend.position = "none",
+        text = element_text(family = "Times New Roman"),
+        legend.text=element_text(size=5)) + 
+  labs(title = "Daily Fatalities LOESS smoothing", 
+       y = "Number per day", 
+       colour = "",
+       caption = caption1)  +
+  facet_wrap(~Province_State, nrow = 2)
+
+soi_per_new_deaths_acctual <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  ggplot(aes(x = Date, y = Deaths, colour = Combined_Key)) + 
+  geom_line() + 
+  scale_colour_manual(values =  jColors3) +
+  theme_clean() +
+  theme(legend.position = "none",
+        text = element_text(family = "Times New Roman")) + 
+  labs(title = "Daily Fatalities -actual", 
+       y = "Number per day", 
+       colour = "",
+       caption = caption1)  +
+  facet_wrap(~Combined_Key, ncol = 3)
+
+# CUMULATIVE fatalities
+#create color table    
+soi_per_total_colors <- soi_table %>% 
+  left_join(soi, by = c("Combined_Key" = "soi")) %>%
+  distinct(Combined_Key, pallet) %>%  
+  arrange(Combined_Key)
+
+jColors4 <- soi_per_total_colors$pallet
+names(jColors4) <- soi_per_total_colors$Combined_Key
+
+soi_per_total_deaths <- soi_table %>% 
+  arrange(Combined_Key) %>% 
+  ggplot() + 
+  geom_col(aes(x = Date, y = Cumulative_Deaths, fill = Combined_Key)) +
+  scale_fill_manual(values =  jColors2) +
+  theme_clean() +
+  theme(legend.position = "none",
+        text = element_text(family = "Times New Roman")) + 
+  labs(title = "Cumulative Fatalities", 
+       y = "", 
+       fill = "",
+       caption = caption1 )  
+
+population_table <- soi_table %>%  
+  distinct(Combined_Key, population = Population_Count)  %>%  
+  rename(Location = Combined_Key) %>% 
+  arrange(desc(population)) %>% 
+  mutate(population = scales::comma(population)) %>% 
+  kable()  %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+
+
+
+
+```
+
+  
+## Counties of Interest  
+Data from New York Times and Census data
+
+`r caption1`  
+
+```{r plot}
+soi_per_new 
+soi_per_new_actual
+soi_per_ir
+population_table
+soi_per_new_deaths
+soi_per_new_deaths_acctual
+soi_per_total + soi_per_total_deaths
+
+```
+
+```{r places with change}
+#create parameters for dataes
+t2_end <- Sys.Date() -1
+t2_start <- t2_end - 7
+
+t1_end <- t2_end - 14
+t1_start <- t2_start -14
+
+
+t1_days <- seq(t1_start, t1_end, 1)
+t2_days <- seq(t2_start, t2_end, 1)
+
+#create function to find percentage
+pec_chng <- function(t1, t2) { 
+      (t2-t1)/t1 }
+
+
+
+
+jColors10 <- soi_per_total_colors$pallet
+names(jColors10) <- soi_per_total_colors$Combined_Key
+
+
+#create data table for calculation
+soi_table %>%  
+  filter(Date > "2020-03-01") %>%  
+  group_by(Combined_Key) %>% 
+  filter(Date %in% t1_days | Date %in% t2_days) %>% 
+  mutate(Test_Period = ifelse(Date %in% t1_days, "t1", "t2")) %>%  
+  ungroup() %>%  
+  group_by(Combined_Key, Test_Period) %>% 
+  summarize(weekly_average = mean(Difference)) %>%  
+  spread(Test_Period, value = weekly_average) %>%  
+  filter(t2 > 0) %>% 
+  filter(t1 > 0) %>% 
+  mutate(percentage_change = pec_chng(t1,t2)) %>%  
+  filter(Combined_Key %in% soi$soi) %>% 
+  ungroup() %>% 
+  mutate(Combined_Key = as.factor(Combined_Key)) %>%  
+  mutate(Combined_Key = fct_reorder(Combined_Key, percentage_change)) %>%  
+  ggplot(aes(x = Combined_Key, y = percentage_change, fill = Combined_Key)) +
+  geom_col() +
+  scale_fill_manual(values =  jColors10) +
+  coord_flip() + 
+  theme_clean() +
+  theme(legend.position = "none",
+        text = element_text(family = "Times New Roman")) + 
+  labs(title = "Percentage Change in Daily", 
+       subtitle = "Calculated by comparing the weekly average for this week and a week 14 days ago",
+       y = "", 
+       fill = "",
+       caption = caption1 )  
+  
+
+  
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

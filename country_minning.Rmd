@@ -1,0 +1,203 @@
+---
+date: "4/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=25, echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r run code}
+library(readr)
+library(tidyverse)
+library(readxl)
+library(zoo)
+library(ggthemes)
+library(extrafont)
+library(kableExtra)
+
+
+my_theme <- theme_clean()
+
+loadfonts(device = "win")
+
+number_of_countries <- 10
+number_of_countries2 <- 60
+number_of_cols <- 3
+tspan <- 120
+
+excluded_countries <- c("Qatar", "Ecuador")
+
+#load data 
+
+#load population for countries around the world. 
+
+pop_lookup <- read_rds(here::here("pop_country_level.rds")) %>% 
+  mutate(Country_Region = ifelse(Country_Region == "Korea, South", "South Korea", Country_Region))
+
+df1 <- read_csv("data_world_download/COVID-19 Activity.csv",
+col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
+PEOPLE_POSITIVE_CASES_COUNT = col_number(),
+PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),
+PEOPLE_DEATH_COUNT = col_number(),
+PEOPLE_DEATH_NEW_COUNT = col_number()))   %>% 
+  select(Date = REPORT_DATE,
+         Admin2 = COUNTY_NAME,
+         Province_State = PROVINCE_STATE_NAME,
+         Country_Region = COUNTRY_SHORT_NAME,
+         country_code = COUNTRY_ALPHA_2_CODE,
+         CONTINENT_NAME,
+         Cases = PEOPLE_POSITIVE_CASES_COUNT,
+         Difference = PEOPLE_POSITIVE_NEW_CASES_COUNT,
+         Deaths = PEOPLE_DEATH_NEW_COUNT,
+         Cumulative_Deaths = PEOPLE_DEATH_COUNT,
+         ) %>%  
+  group_by(Date, Country_Region) %>%  
+  summarize_if(is.numeric, sum) %>%  
+  left_join(pop_lookup, by = "Country_Region")
+
+n_reginos <- length(unique(df1$Country_Region))
+
+order1 <- df1 %>% 
+  ungroup() %>% 
+  group_by(Country_Region) %>% 
+  filter(Date == max(Date)) %>%  
+  select(Country_Region, Cases) %>%  
+  arrange(desc(Cases)) 
+
+ln <- length(order1$Country_Region)
+
+order1 <- order1 %>%   
+ungroup() %>% 
+mutate(orderv = 1:ln) %>% 
+  select(-Cases)
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  ggplot(aes(x = Date, y = Difference, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 6) +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Difference), alpha = 0.4) +
+  ylim(0, 40000) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Daily Cases")
+
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  ggplot(aes(x = Date, y = Cases, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 6) +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Cases , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Cases), alpha = 0.4) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Cumulative Cases")
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  ggplot(aes(x = Date, y = Difference, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 5, scales = "free") +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Difference), alpha = 0.4) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Daily Cases", subtitle = "Y-axsis is free")
+
+
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  mutate(Difference_pc = (Difference/population)*100000) %>% 
+  filter(!(Country_Region %in% excluded_countries)) %>% 
+  ggplot(aes(x = Date, y = Difference_pc, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Difference_pc , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Difference_pc), alpha = 0.4) +
+  ylim(0,75) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Daily Cases per 100,000 people")
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  mutate(Difference_pc = (Difference/population)*100000) %>% 
+  ggplot(aes(x = Date, y = Difference_pc, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 5, scales = "free") +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Difference_pc , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Difference_pc), alpha = 0.4) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Daily Cases per 100,000 people", subtitle = "Y-axsis is free")
+
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  filter(Deaths >= 0) %>% 
+  mutate(Deaths_pc = (Deaths/population)*100000) %>% 
+  ggplot(aes(x = Date, y = Deaths_pc, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Deaths_pc , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Deaths_pc), alpha = 0.4) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Daily Fatalities per 100,000 people")
+
+df1 %>% 
+  left_join(order1, by = "Country_Region") %>% 
+  ungroup() %>% 
+  mutate(Country_Region = factor(Country_Region)) %>%  
+  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
+  filter(orderv <= 60) %>% 
+  filter(Cumulative_Deaths >= 0) %>% 
+  mutate(Cumulative_Deaths_pc = (Cumulative_Deaths/population)*100000) %>% 
+  ggplot(aes(x = Date, y = Cumulative_Deaths_pc, colour = Country_Region)) +  
+  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  geom_smooth(se = FALSE) +
+  geom_segment(aes(x = Date, y = Cumulative_Deaths_pc , xend = Date, yend = 0), alpha = 0.3) + 
+  geom_point(aes(x = Date, y = Cumulative_Deaths_pc), alpha = 0.4) +
+  my_theme +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Cumulative Fatalities per 100,000 people")
+
+```
+
+

@@ -1,0 +1,235 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r run code}
+library(readr)
+library(tidyverse)
+library(readxl)
+library(zoo)
+library(ggthemes)
+library(extrafont)
+library(kableExtra)
+library(sf)
+
+
+loadfonts(device = "win")
+pop_lookup <- read_rds(here::here("population_lookup.rds"))
+
+
+#load data set downloaded from Data world
+cc <- read_csv("data_world_download/COVID-19 Activity.csv",
+col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
+PEOPLE_POSITIVE_CASES_COUNT = col_number(),
+PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),
+PEOPLE_DEATH_COUNT = col_number(),
+PEOPLE_DEATH_NEW_COUNT = col_number()))   %>% 
+  select(Date = REPORT_DATE,
+         Admin2 = COUNTY_NAME,
+         Province_State = PROVINCE_STATE_NAME,
+         Country_Region = COUNTRY_SHORT_NAME,
+         country_code = COUNTRY_ALPHA_2_CODE,
+         CONTINENT_NAME,
+         Cases = PEOPLE_POSITIVE_CASES_COUNT,
+         Difference = PEOPLE_POSITIVE_NEW_CASES_COUNT,
+         Deaths = PEOPLE_DEATH_NEW_COUNT,
+         Cumulative_Deaths = PEOPLE_DEATH_COUNT,
+         ) %>%
+  mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%  
+  left_join(pop_lookup, by = "Combined_Key") %>% 
+  mutate(infection_Rate = (Cases/Population_Count)*100000)  
+
+
+
+date_of_data <-  max(cc$Date) 
+date_of_data <- format(date_of_data, "%d %B %Y")
+subtitle <- paste("Data updated on ", date_of_data, sep = "") 
+tspan <- 120
+
+Key <- clu$Key[i]
+
+
+# Key <- "Durham,  US"
+
+
+#create map
+
+#load city lat long
+
+
+map_data <- cc%>%  
+  filter(Combined_Key == Key) %>%  
+  distinct(Province_State, Lat, Long)
+
+st_n <- map_data %>% mutate(Province_State = str_to_lower(Province_State)) %>% pull(1) 
+lon1 <- map_data %>% pull(3)
+lat1 <- map_data %>% pull(2)
+
+all_states <- map_data("state")
+
+
+state1 <- subset(all_states, region == st_n)
+
+
+city_by_ll <- read_csv(here::here("zip_codes_states.csv")) %>% 
+  mutate(lat_d = abs(latitude - lat1)) %>% 
+  mutate(lon_d = abs(longitude - lon1)) %>% 
+  mutate(total_diff = lon_d + lat_d ) %>%  
+  filter(total_diff == min(total_diff, na.rm = TRUE)) %>% 
+  select(city, latitude, longitude)
+
+
+
+
+map_for_report <- ggplot(data = state1) +
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "palegreen", color = "black") +
+  coord_fixed(1.3) +
+  geom_point(aes(x = lon1, y = lat1), color = "red", size = 5) +
+  geom_label(data = city_by_ll, aes(x = longitude, y = latitude, label = city), vjust = 0, nudge_y = 0.2) +
+  theme_void()
+
+
+
+#crunch data for report
+table1 <- cc %>% 
+  filter(Combined_Key == Key) %>% 
+  select(Date, Cases, Difference, Deaths, Cumulative_Deaths) %>%  
+  mutate(Date = as.Date(Date)) %>% arrange(desc(Date)) %>%  
+  mutate(percentage_change = (Cases - lead(Cases))/lead(Cases)) %>% 
+  mutate(daily_new_cases_difference = 
+           Difference - lead(Difference)) %>%  
+  filter(!is.na(percentage_change))
+
+p_change <- table1 %>%  
+  ggplot(aes(x = Date, y = percentage_change)) +  
+  geom_line() + 
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  theme_classic()
+
+p_new_cases_difference <- table1 %>%  
+  ggplot(aes(x = Date, y = daily_new_cases_difference)) +  
+  geom_point(aes(x = Date, y = daily_new_cases_difference)) + 
+  geom_segment(aes(x = Date, xend = Date, y = 0, yend = daily_new_cases_difference)) +
+  geom_smooth() +
+  theme_classic()
+
+p1 <- cc %>% 
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(as.Date(Date)) - tspan) %>%  
+  select(Date, Cases, Difference) %>%  
+  mutate(Date = as.Date(Date)) %>%  
+  ggplot(aes(x = Date, y = Cases)) +  
+  geom_line() + 
+  theme_classic() +
+  labs(title = "Cumulative Cases")
+
+p2 <- cc %>% 
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(as.Date(Date)) - tspan) %>%  
+  select(Date, Cases, Difference) %>%  
+  mutate(Date = as.Date(Date)) %>%  
+  ggplot(aes(x = Date, y = Difference)) +  
+  geom_point() +
+  geom_segment(aes( x = Date, xend = Date, y = 0, yend = Difference)) +
+  theme_classic() +
+  geom_smooth(se = FALSE)+ 
+  labs(title = "Daily Cases")
+
+p3 <- cc %>% 
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(as.Date(Date)) - tspan) %>%  
+  select(Date, Cumulative_Deaths) %>%  
+  mutate(Date = as.Date(Date)) %>%  
+  ggplot(aes(x = Date, y = Cumulative_Deaths)) +  
+  theme_classic() +
+  geom_line() + 
+  labs(title = "Cumulative Deaths")
+
+p4 <- cc %>% 
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(as.Date(Date)) - tspan) %>%  
+  select(Date, Deaths) %>%  
+  mutate(Date = as.Date(Date)) %>%  
+  ggplot(aes(x = Date, y = Deaths)) +  
+  geom_point() +
+  geom_segment(aes( x = Date, xend = Date, y = 0, yend = Deaths)) +  theme_classic() +
+  geom_smooth(se = FALSE)+ 
+  labs(title = "Daily Deaths")
+
+
+#infection rate by
+date_of_report <- cc %>%  
+  filter(Combined_Key == Key) %>% 
+  summarize(date_of_report = max(Date)) %>% 
+  pull()
+
+state_of_report <- cc %>%  
+  filter(Combined_Key == Key) %>% 
+  select(Province_State) %>% 
+  distinct(.) %>% 
+  pull()
+            
+rate_distro <- cc %>%  
+  filter(Date == date_of_report) %>%  
+  filter(Province_State == state_of_report) %>%  
+  filter(!is.na(infection_Rate)) %>%  
+  mutate(report_county = ifelse(Combined_Key == Key, "Report County", "Rest of State")) %>%  
+  ggplot(aes(y = infection_Rate, x = report_county)) + 
+  geom_point(size = 7, alpha = .25) +
+  theme_classic() + 
+  theme(legend.position = "none") +
+  labs(title = "Infection per 100,000 folks, by county in that state",
+       subtitle = state_of_report, 
+       x = "", 
+       y = "Infections per 100,000 population")
+
+
+
+```
+### `r Key` 
+### `r subtitle`
+```{r map, fig.align = "left", fig.width = 2, fig.height=2,}
+map_for_report
+```
+
+
+
+
+ 
+```{r run charts}
+
+
+library(patchwork)
+p1 + p2
+
+p3 + p4
+
+rate_distro
+
+p_change + p_new_cases_difference
+
+```
+
+
+
+
+County Daily Summary
+```{r summary table}
+
+cc %>%  
+  filter(Combined_Key == Key) %>% 
+  filter(Date == max(Date)) %>%  
+  select(Cases, Difference, Deaths, Cumulative_Deaths) %>% 
+  rename(`Cumulative` = Cases, `New Daily` = Difference)  %>%  
+  mutate_if(is.numeric, scales::comma) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+

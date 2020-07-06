@@ -1,9 +1,10 @@
 ---
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(fig.align = "center", fig.width = 7.5, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
+# knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
 ```{r load data}
@@ -14,7 +15,7 @@ library(zoo)
 library(ggthemes)
 library(extrafont)
 library(patchwork)
-library(kableExtra)
+library(pander)
 
 lenged_font_size <- 7
 
@@ -293,8 +294,7 @@ population_table <- soi_table %>%
   rename(Location = Combined_Key) %>% 
   arrange(desc(population)) %>% 
   mutate(population = scales::comma(population)) %>% 
-  kable()  %>%
-  kable_styling(bootstrap_options = "striped", full_width = F)
+  pander()
 
 
 

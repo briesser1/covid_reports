@@ -4,7 +4,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center", fig.height = 3.75, fig.width = 7.5, echo = FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(fig.align = "center", fig.height = 3.85, fig.width = 7.5, echo = FALSE, message=FALSE, warning=FALSE)
 # knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
@@ -246,7 +246,24 @@ percent_positive <- testing %>%
   pull() 
 
 ```
-## County Daily Summary for Greenville SC  
+## Testing and percent positive for all of South Carolina  
+### Most recent percent positive:`r percent_positive`    
+```{r sc }
+library(patchwork)
+p1_testing + p2_testing
+```
+
+
+
+```{r county compr, fig.width=7}
+
+
+compar_counties
+
+```
+\newpage
+
+## County Daily Summary for Greenville County SC  
 
 `r subtitle`  
 ```{r summary table}
@@ -260,13 +277,9 @@ cc %>%
   pander()
 
 ```
-## Most recent percent positive:`r percent_positive`  
-```{r run charts}
-library(patchwork)
-p1_testing + p2_testing
 
-compar_counties
 
+```{r run charts }
 
 p1 + p2
 

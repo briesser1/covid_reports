@@ -184,8 +184,7 @@ compar_counties <- cc %>%
 # load testing data
 testing <- read_csv("data_world_download/3_covid_tracking_project_historical_testing_numbers_and_covid_deaths_by_state.csv", 
     col_types = cols(date = col_date(format = "%Y-%m-%d"), 
-        last_update_et = col_datetime(format = "%m/%d/%Y %H:%M"))) %>%  
-  filter(state == State_Key)
+        last_update_et = col_datetime(format = "%m/%d/%Y %H:%M"))) %>% filter(state == State_Key)
 
 high_positive_tests <-  testing %>%  
   filter(date > fdate) %>%  

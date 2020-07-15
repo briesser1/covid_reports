@@ -217,7 +217,7 @@ p6 <- table1 %>%
 ```
 
 ## Data was updated on: `r update_date`  
-Since the spread of the Novel Corona-virus across both Europe and North America, many have made comparisons between the United States and individual EU countries.  It is important to understand differences in population size between the United States and EU countries. Aggregating western European countries into a single entity is a more apt comparison to the United States when comparing data that is not adjusted for population.   
+Western European Countries have been grouped together to provide a better comparision for the United States.     
 
 Comparision with Group of EU countries. Total population of selected EU countries = `r pop_ofUSE`; population of USA is 328 million 
 

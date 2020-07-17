@@ -32,7 +32,7 @@ legend_position = c("2020-05-15", 3000)
 
 #load data set downloaded from Data world
 cc <- read_csv("data_world_download/COVID-19 Activity.csv",
-col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+col_types = cols(REPORT_DATE = col_date(format ="%Y-%m-%d"),
 COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
 PEOPLE_POSITIVE_CASES_COUNT = col_number(),
 PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),
@@ -49,9 +49,10 @@ PEOPLE_DEATH_NEW_COUNT = col_number()))   %>%
          Deaths = PEOPLE_DEATH_NEW_COUNT,
          Cumulative_Deaths = PEOPLE_DEATH_COUNT,
          ) %>%
+  filter(country_code == "US") %>% 
   mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%  
   left_join(pop_lookup, by = "Combined_Key") %>% 
-  mutate(infection_Rate = (Cases/Population_Count)*100000)  
+  mutate(infection_Rate = (Cases/Population_Count)*100000) 
 
 
 
@@ -178,13 +179,19 @@ compar_counties <- cc %>%
        subtitle = "Graph shows the 5 counties with the most daily cases", 
        caption = "Source:New York Times") + 
   ylab("Daily Cases")
+
+last_update_for_county <- cc %>% 
+  filter(Combined_Key == Key) %>%  
+  filter(Date >= max(as.Date(Date))) %>%  
+  select(Date) %>%  
+  pull()
   
 
 
 # load testing data
 testing <- read_csv("data_world_download/3_covid_tracking_project_historical_testing_numbers_and_covid_deaths_by_state.csv", 
-    col_types = cols(date = col_date(format = "%Y-%m-%d"), 
-        last_update_et = col_datetime(format = "%m/%d/%Y %H:%M"))) %>% filter(state == State_Key)
+    col_types = cols(date = col_date(format = "%Y-%m-%d %H:%M:%S"), 
+        last_update_et = col_datetime(format = "%Y-%m-%d %H:%M:%S"))) %>% filter(state == State_Key)
 
 high_positive_tests <-  testing %>%  
   filter(date > fdate) %>%  
@@ -244,15 +251,19 @@ percent_positive <- testing %>%
   mutate(positivity_rate_7_day_rolling_avg = paste(positivity_rate_7_day_rolling_avg, "%", sep = "")) %>% 
   pull() 
 
+last_update <- testing %>%  
+  filter(date == max(date)) %>% 
+  select(last_update_et) %>% 
+  pull()
 ```
 ## Testing and percent positive for all of South Carolina  
-### Most recent percent positive:`r percent_positive`    
+### Most recent percent positive:`r percent_positive` at `r last_update` 
 ```{r sc }
 library(patchwork)
 p1_testing + p2_testing
 ```
 
-
+###  Data for `r Key` and surrounding counties. Data updated: `r last_update_for_county`  
 
 ```{r county compr, fig.width=7}
 

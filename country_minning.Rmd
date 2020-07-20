@@ -36,7 +36,7 @@ pop_lookup <- read_rds(here::here("pop_country_level.rds")) %>%
   mutate(Country_Region = ifelse(Country_Region == "Korea, South", "South Korea", Country_Region))
 
 df1 <- read_csv("data_world_download/COVID-19 Activity.csv",
-col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+col_types = cols(REPORT_DATE = col_date(format = "%Y-%m-%d"),
 COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
 PEOPLE_POSITIVE_CASES_COUNT = col_number(),
 PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),

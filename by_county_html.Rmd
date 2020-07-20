@@ -23,7 +23,7 @@ loadfonts(device = "win")
 
 
 cc <- read_csv("data_world_download/COVID-19 Activity.csv",
-col_types = cols(REPORT_DATE = col_date(format = "%m/%d/%Y"),
+col_types = cols(REPORT_DATE = col_date(format = "%Y-%m-%d"),
 COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
 PEOPLE_POSITIVE_CASES_COUNT = col_number(),
 PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),

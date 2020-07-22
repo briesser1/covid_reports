@@ -154,7 +154,7 @@ p2 <- table1 %>%
   select(Group, Date, Cases, Difference) %>%  
   filter(Difference >= 0) %>% 
   ggplot(aes(x = Date, y = Difference, colour = Group)) +  
-  geom_point() +
+  geom_point(size = .5) +
   geom_segment(aes( x = Date, xend = Date, y = 0, yend = Difference), alpha = .5) +
   theme_classic() +
   scale_colour_manual(values = color_set) +
@@ -176,7 +176,7 @@ p4 <- table1 %>%
   select(Group, Date, Deaths) %>%  
   filter(Deaths >= 0 ) %>% 
   ggplot(aes(x = Date, y = Deaths, colour = Group)) +  
-  geom_point() +
+  geom_point(size = .5) +
   geom_segment(aes( x = Date, xend = Date, y = 0, yend = Deaths), alpha = .5) +
   theme_classic() +
   geom_smooth(se = FALSE)+ 

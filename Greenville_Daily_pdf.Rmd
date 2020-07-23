@@ -89,7 +89,7 @@ p1 <- cc %>%
   mutate(Date = as.Date(Date)) %>%  
   ggplot(aes(x = Date, y = Cases)) +  
   geom_line() + 
-  scale_y_continuous(labels = scales::comma, breaks = seq(0, p1_high, 500)) +
+  scale_y_continuous(labels = scales::comma, breaks = seq(0, p1_high, 1000)) +
   theme_bw() +
   theme(text=element_text(family=font_family1, color = font_color)) +
   labs(title = "Cumulative Cases", 
@@ -97,13 +97,23 @@ p1 <- cc %>%
        caption = "Source:New York Times") + 
   ylab("Cumulative Cases")
 
+
+p2_high <-  cc %>% 
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(as.Date(Date)) - tspan) %>%  
+  select(Date, Cases, Difference) %>% 
+  summarize(difference_high = max(Difference)) %>%  
+  pull()
+
+
 p2 <- cc %>% 
   filter(Combined_Key == Key) %>% 
   filter(Date >= max(as.Date(Date)) - tspan) %>%  
   select(Date, Cases, Difference) %>%  
   mutate(Date = as.Date(Date)) %>%  
-  ggplot(aes(x = Date, y = Difference)) +  
-  geom_point() +
+  ggplot(aes(x = Date, y = Difference)) + 
+  scale_y_continuous(labels = scales::comma, breaks = seq(0, p2_high, 50)) +
+  geom_point(size = 1) +
   geom_segment(aes( x = Date, xend = Date, y = 0, yend = Difference)) +
   theme_bw() +
   theme(text=element_text(family=font_family1, color = font_color)) +
@@ -133,7 +143,7 @@ p4 <- cc %>%
   select(Date, Deaths) %>%  
   mutate(Date = as.Date(Date)) %>%  
   ggplot(aes(x = Date, y = Deaths)) +  
-  geom_point() +
+  geom_point(size = 1) +
   geom_segment(aes( x = Date, xend = Date, y = 0, yend = Deaths)) +
   scale_y_continuous(labels = scales::comma, breaks = seq(0, 13, 2)) +
   theme_bw() +
@@ -211,27 +221,6 @@ p1_testing <- testing %>%
        caption = "Source: Associated Press, The COVID Tracking Project") + 
   ylab("Positive Rate, 7day rolling avg.")
 
-
-
-
-
-# p2_testing <- testing %>%
-#   filter(date > fdate ) %>%
-#   select(date, positive_tests_increase, negative_tests_increase) %>%
-#   gather(metric, value, -date) %>%
-#   mutate(metric = ifelse(metric == "cumulative_positive_tests", "Positive", "Negative")) %>%
-#   ggplot(aes(x = date, y = 	value, colour = metric)) +
-#   geom_line() +
-#   scale_y_continuous(labels = scales::comma) +
-#   theme_bw() +
-#   theme(text=element_text(family=font_family1, color = font_color)) +
-#   theme(legend.position = "right") +
-#   labs(title = "Daily Test results in South Carolina",
-#        subtitle = "Per 1000 people",
-#        caption = "Source: Associated Press, The COVID Tracking Project",
-#        colour = "") +
-#   ylab("Number of Tests")
-
 p2_testing <- testing %>%
   filter(date > fdate ) %>%
   select(date, cumulative_total_people_tested) %>%
@@ -296,6 +285,134 @@ p1 + p2
 p3 + p4
 
 
+```
+
+
+```{r cumulative cases, fig.align = "center", fig.width = 8, fig.height=25, echo = FALSE, message=FALSE, warning=FALSE}
+khh_download <- "5/7/2020"
+
+loadfonts(device = "win")
+
+pop_lookup <- read_rds(here::here("population_lookup.rds"))
+
+cc <- read_csv("data_world_download/COVID-19 Activity.csv",
+                col_types = cols(REPORT_DATE = col_date(format = "%Y-%m-%d"),
+                                 COUNTY_NAME = col_character(), COUNTY_FIPS_NUMBER = col_character(),
+                                 PEOPLE_POSITIVE_CASES_COUNT = col_number(),
+                                 PEOPLE_POSITIVE_NEW_CASES_COUNT = col_number(),
+                                 PEOPLE_DEATH_COUNT = col_number(),
+                                 PEOPLE_DEATH_NEW_COUNT = col_number()))   %>% 
+  select(Date = REPORT_DATE,
+         Admin2 = COUNTY_NAME,
+         Province_State = PROVINCE_STATE_NAME,
+         Country_Region = COUNTRY_SHORT_NAME,
+         country_code = COUNTRY_ALPHA_2_CODE,
+         CONTINENT_NAME,
+         Cases = PEOPLE_POSITIVE_CASES_COUNT,
+         Difference = PEOPLE_POSITIVE_NEW_CASES_COUNT,
+         Deaths = PEOPLE_DEATH_NEW_COUNT,
+         Cumulative_Deaths = PEOPLE_DEATH_COUNT,
+  ) %>%
+  mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%  
+  left_join(pop_lookup, by = "Combined_Key") 
+
+  
+
+#governors
+gov <- read_csv(here::here("kh_sets", "governors.csv")) %>%  
+  select(state_name, state_code, party, name, gender, religion, date_of_birth, entered_office)
+
+#set parameters
+date_of_data <- format(max(cc$Date, "%d-%b-%Y"))
+caption1 <- paste("Data updated on ", date_of_data, sep = "") 
+
+
+#corona policy
+policy <- read_csv(here::here("kh_sets", "khn_policy.csv")) %>%  
+  filter(Location != "United States") %>%  
+  filter(Location != "District of Columbia") %>%  
+  filter(!is.na(`Stay at Home Order`))%>%  
+  select(-Footnotes)
+
+
+
+
+
+
+ma_days <- 7
+subtite1 <- paste("Moving average over ", ma_days, " days", sep = "")
+
+#crunch data
+df1 <-  cc %>%  
+  filter(Date > "2020-03-01") %>% 
+  select(Province_State, Date, Population_Count, everything()) %>% 
+  group_by(Province_State, Date) %>% 
+  summarize_if(is.numeric, sum, na.rm = TRUE) %>% 
+  left_join(gov, by = c("Province_State" = "state_name")) %>%  
+  mutate(Cases_pc = (Cases/Population_Count)*100000) %>% 
+  mutate(Difference_pc = (Difference/Population_Count)*100000) %>% 
+  mutate(Deaths_pc = (Deaths/Population_Count)*100000) %>% 
+  mutate(Cumulative_Deaths_pc = (Cumulative_Deaths/Population_Count)*100000) %>%  
+  filter(!is.na(party))
+
+  
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r states comparision, fig.align = "center", fig.width = 8, fig.height=25, echo = FALSE, message=FALSE, warning=FALSE}
+factorize_ps <- df1 %>%   
+  distinct(party, Province_State) %>%  
+  arrange(party, Province_State) %>%  
+  ungroup() %>% 
+  mutate(order = c(1:50)) %>%  
+  select(-party)
+```
+
+
+```{r geofact, fig.align = "center", fig.width = 8, fig.height=8, echo = FALSE, message=FALSE,}
+library(geofacet)
+
+map_high <-  df1 %>% 
+  ungroup() %>% 
+  left_join(factorize_ps, by = "Province_State") %>%  
+  mutate(Province_State = as.factor(Province_State)) %>%  
+  mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  filter(Difference_pc == max(Difference_pc)) %>% 
+  select(Difference_pc) %>%  
+  pull()
+  
+
+df1 %>% 
+  ungroup() %>% 
+  left_join(factorize_ps, by = "Province_State") %>%  
+  mutate(Province_State = as.factor(Province_State)) %>%  
+  mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  ggplot(aes(x = Date, y = Difference_pc)) + 
+  scale_y_continuous(labels = scales::comma, breaks = seq(0, map_high, 25)) +
+  geom_smooth(aes(colour = party), se = FALSE) +
+  # geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 
+  # geom_point(aes(x = Date, y = Difference_pc,colour = party )) + 
+  scale_color_manual(values = c("blue", "red")) +
+  facet_geo(~ state_code) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        text=element_text(family=font_family1)) +
+  labs(title = "Daily Cases By state, adjusted for Population", 
+       subtitle = "Color for Governor's Political Party",
+       caption = caption1, 
+       y = "Daily Cases per 100K")
 ```
 
 

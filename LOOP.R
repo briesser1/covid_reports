@@ -33,30 +33,30 @@ html_to_pdf <- function(html_file, pdf_file) {
 
 
 ##Loop 
-for (i in 1:nrow(clu)){
-  
-  file_name <- paste(clu$file_name[i],  "_county_report.html", sep = "")
-  
-  dir.create(here::here("county_report", new_directory))
-  
-  rmarkdown::render(input = "county_daily.Rmd",
-                    output_format =  "html_document",
-                    output_file = file_name,
-                    output_dir = new_county_directory)
-}
+# for (i in 1:nrow(clu)){
+#   
+#   file_name <- paste(clu$file_name[i],  "_county_report.html", sep = "")
+#   
+#   dir.create(here::here("county_report", new_directory))
+#   
+#   rmarkdown::render(input = "county_daily.Rmd",
+#                     output_format =  "html_document",
+#                     output_file = file_name,
+#                     output_dir = new_county_directory)
+# }
 
-
-us_states <- read_rds("us_states.rds")
-  ##Loop
-  for (i in 1:nrow(us_states)){
-    file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
-
-
-    rmarkdown::render(input = "state_daily.Rmd",
-                      output_format =  "html_document",
-                      output_file = file_name,
-                      output_dir = new_state_directory)
-  }
+# 
+# us_states <- read_rds("us_states.rds")
+#   ##Loop
+#   for (i in 1:nrow(us_states)){
+#     file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
+# 
+# 
+#     rmarkdown::render(input = "state_daily.Rmd",
+#                       output_format =  "html_document",
+#                       output_file = file_name,
+#                       output_dir = new_state_directory)
+#   }
   
 
 
@@ -115,6 +115,25 @@ rmarkdown::render(input = "data_minning.Rmd",
                   output_format =  "html_document",
                   output_file = file_name6,
                   output_dir = new_directory)
+
+
+#run greenville report to pdf
+file_name7 <- paste("Greenville_Daily_pdf", todays_date, ".pdf", sep = "")
+pdf_folder <- here::here("pdfs")
+
+rmarkdown::render(input = "Greenville_Daily_pdf.Rmd",
+                  output_format =  "pdf_document",
+                  output_file = file_name7,
+                  output_dir = pdf_folder)
+
+#run greenville report to pdf
+file_name8 <- paste("US_V_EU", todays_date, ".pdf", sep = "")
+pdf_folder <- here::here("pdfs")
+
+rmarkdown::render(input = "US_V_EU.Rmd",
+                  output_format =  "pdf_document",
+                  output_file = file_name7,
+                  output_dir = pdf_folder)
 
 
 

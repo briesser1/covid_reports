@@ -275,6 +275,13 @@ cc %>%
   mutate_if(is.numeric, scales::comma) %>% 
   pander()
 
+View(
+cc %>%  
+  filter(Combined_Key == Key) %>% 
+  filter(Date >= max(Date)- 14) %>%  
+  select(Date, Cases, Difference, Deaths, Cumulative_Deaths) %>% 
+  arrange(desc(Date))
+)
 ```
 
 

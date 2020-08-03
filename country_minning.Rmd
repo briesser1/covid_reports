@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=25, echo = FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=10, echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
 ```{r run code}
@@ -21,12 +21,13 @@ my_theme <- theme_clean()
 
 loadfonts(device = "win")
 
-number_of_countries <- 10
-number_of_countries2 <- 60
-number_of_cols <- 3
+number_of_countries <- 12
+number_of_countries2 <- 25
+number_of_cols <- 4
 tspan <- 120
 
-excluded_countries <- c("Qatar", "Ecuador")
+# excluded_countries <- c("Qatar", "Ecuador")
+excluded_countries <- c()
 
 #load data 
 
@@ -73,14 +74,28 @@ ungroup() %>%
 mutate(orderv = 1:ln) %>% 
   select(-Cases)
 
-df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
+df1 <- df1 %>% 
+    left_join(order1, by = "Country_Region") %>% 
   ungroup() %>% 
   mutate(Country_Region = factor(Country_Region)) %>%  
   mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
+  filter(orderv <= 60) 
+
+top_countries <- df1 %>%  
+  ungroup() %>%
+  group_by(Country_Region) %>%  
+  filter(Date == max(Date)) %>%  
+  select(Country_Region, Cases) %>% 
+  ungroup() %>%  
+  top_n(number_of_countries)
+
+df1 <- df1 %>% 
+  filter(Country_Region %in% top_countries$Country_Region)
+
+#daily cases
+df1 %>%  
   ggplot(aes(x = Date, y = Difference, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 6) +
+  facet_wrap(~ Country_Region, ncol = number_of_cols) +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Difference), alpha = 0.4) +
@@ -90,15 +105,10 @@ df1 %>%
         axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Daily Cases")
 
-
+#cumulative cases
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   ggplot(aes(x = Date, y = Cases, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 6) +
+  facet_wrap(~ Country_Region, ncol = number_of_cols) +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Cases , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Cases), alpha = 0.4) +
@@ -107,14 +117,10 @@ df1 %>%
         axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Cumulative Cases")
 
+#daily cases, y is free
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   ggplot(aes(x = Date, y = Difference, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 5, scales = "free") +
+  facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "free") +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Difference), alpha = 0.4) +
@@ -124,17 +130,12 @@ df1 %>%
   labs(title = "Daily Cases", subtitle = "Y-axsis is free")
 
 
-
+#cases per capita 
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   mutate(Difference_pc = (Difference/population)*100000) %>% 
   filter(!(Country_Region %in% excluded_countries)) %>% 
   ggplot(aes(x = Date, y = Difference_pc, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "fixed") +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Difference_pc , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Difference_pc), alpha = 0.4) +
@@ -145,14 +146,9 @@ df1 %>%
   labs(title = "Daily Cases per 100,000 people")
 
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   mutate(Difference_pc = (Difference/population)*100000) %>% 
   ggplot(aes(x = Date, y = Difference_pc, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 5, scales = "free") +
+  facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "free") +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Difference_pc , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Difference_pc), alpha = 0.4) +
@@ -163,15 +159,10 @@ df1 %>%
 
 
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   filter(Deaths >= 0) %>% 
   mutate(Deaths_pc = (Deaths/population)*100000) %>% 
   ggplot(aes(x = Date, y = Deaths_pc, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "fixed") +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Deaths_pc , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Deaths_pc), alpha = 0.4) +
@@ -181,15 +172,10 @@ df1 %>%
   labs(title = "Daily Fatalities per 100,000 people")
 
 df1 %>% 
-  left_join(order1, by = "Country_Region") %>% 
-  ungroup() %>% 
-  mutate(Country_Region = factor(Country_Region)) %>%  
-  mutate(Country_Region = fct_reorder(Country_Region, orderv)) %>% 
-  filter(orderv <= 60) %>% 
   filter(Cumulative_Deaths >= 0) %>% 
   mutate(Cumulative_Deaths_pc = (Cumulative_Deaths/population)*100000) %>% 
   ggplot(aes(x = Date, y = Cumulative_Deaths_pc, colour = Country_Region)) +  
-  facet_wrap(~ Country_Region, ncol = 5, scales = "fixed") +
+  facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "fixed") +
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Cumulative_Deaths_pc , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Cumulative_Deaths_pc), alpha = 0.4) +

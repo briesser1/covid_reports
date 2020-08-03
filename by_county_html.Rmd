@@ -289,19 +289,18 @@ soi_per_total_deaths <- soi_table %>%
        fill = "",
        caption = caption1 )  
 
+
+
 population_table <- soi_table %>%  
   distinct(Combined_Key, population = Population_Count)  %>%  
   rename(Location = Combined_Key) %>% 
   arrange(desc(population)) %>% 
   mutate(population = scales::comma(population)) %>% 
-  pander()
-
-
-
-
-```
-
+  pander()   
   
+```
+  
+    
 ## Counties of Interest  
 Data from New York Times and Census data
 

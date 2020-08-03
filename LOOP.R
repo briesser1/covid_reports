@@ -48,15 +48,15 @@ for (i in 1:nrow(clu)){
 
 # us_states <- read_rds("us_states.rds")
   ##Loop
-  for (i in 1:nrow(us_states)){
-    file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
-
-
-    rmarkdown::render(input = "state_daily.Rmd",
-                      output_format =  "html_document",
-                      output_file = file_name,
-                      output_dir = new_state_directory)
-  }
+  # for (i in 1:nrow(us_states)){
+  #   file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
+  # 
+  # 
+  #   rmarkdown::render(input = "state_daily.Rmd",
+  #                     output_format =  "html_document",
+  #                     output_file = file_name,
+  #                     output_dir = new_state_directory)
+  # }
   
 
 

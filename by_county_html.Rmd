@@ -117,7 +117,7 @@ soi_table <- cc %>%
 
 
 
-# create charts -----------------------------------------------------------
+# create charts for report -----------------------------------------------------------
 
 
 # PLOT MOVING AVERAGE OF NEW CASES

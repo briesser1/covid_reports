@@ -25,10 +25,16 @@ dir.create(new_state_directory)
 
 todays_date <- d_formated
 
-html_to_pdf <- function(html_file, pdf_file) {
-  cmd <- sprintf("pandoc %s -t latex -o %s", html_file, pdf_file)
-  system(cmd)
-}
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++
+# this function take an html_file and outputs to pdf, 
+# this was going to be used to change html report to pdfs for easier
+# vieing on github
+#no longer needed. 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# html_to_pdf <- function(html_file, pdf_file) {
+#   cmd <- sprintf("pandoc %s -t latex -o %s", html_file, pdf_file)
+#   system(cmd)
+# }
 
 
 

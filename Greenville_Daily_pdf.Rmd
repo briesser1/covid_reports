@@ -420,11 +420,47 @@ df1 %>%
        subtitle = "Color for Governor's Political Party",
        caption = caption1, 
        y = "Daily Cases per 100K")
+
+df1 %>% 
+  ungroup() %>% 
+  left_join(factorize_ps, by = "Province_State") %>%  
+  mutate(Province_State = as.factor(Province_State)) %>%  
+  mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  mutate(c_to_d_ratio = Deaths/lag(Difference, n = 30)) %>% 
+  ggplot(aes(x = Date, y = c_to_d_ratio)) + 
+  scale_y_continuous(labels = scales::comma, breaks = seq(0, map_high, 25)) +
+  geom_smooth(aes(colour = party), se = FALSE) +
+  scale_color_manual(values = c("blue", "red")) +
+  facet_geo(~ state_code) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        text=element_text(family=font_family1)) +
+  labs(title = "Deaths to New Cases Ratio", 
+       subtitle = "Color for Governor's Political Party \n (Deaths/Number of New Cases 30 days before)",
+       caption = caption1, 
+       y = "Daily Cases per 100K")
+
+
+df1 %>% 
+  ungroup() %>% 
+  left_join(factorize_ps, by = "Province_State") %>%  
+  mutate(Province_State = as.factor(Province_State)) %>%  
+  mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  mutate(c_to_d_ratio = Deaths/lag(Difference, n = 30)) %>% 
+  ggplot(aes(x = Date, y = c_to_d_ratio, group = Province_State)) +
+  geom_smooth(aes(colour = party), se = FALSE, size = .5) +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(title = "In Development")
+
 ```
 
+```{r test}
+testing2 <- read_csv("data_world_download/3_covid_tracking_project_historical_testing_numbers_and_covid_deaths_by_state.csv", 
+    col_types = cols(date = col_date(format = "%Y-%m-%d %H:%M:%S"), 
+        last_update_et = col_datetime(format = "%Y-%m-%d %H:%M:%S"))) 
 
-
-
-
-
+```
 

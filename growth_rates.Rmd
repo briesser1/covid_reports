@@ -1,0 +1,77 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 8, fig.height=5, echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r run code}
+library(readr)
+library(tidyverse)
+library(readxl)
+
+library(ggthemes)
+library(extrafont)
+library(kableExtra)
+library(sf)
+
+
+loadfonts(device = "win")
+pop_lookup <- read_rds(here::here("population_lookup.rds"))
+
+
+#load data set downloaded from Data world
+cc <- read_csv(here::here("data_world_download", "COVID-19 Activity.csv")) %>% 
+   select(Date = report_date, 
+         Admin2 = county_name,
+         Province_State = province_state_name, 
+         country_short_name, 
+         country_code = country_alpha_2_code,
+         continent_name,
+         Cases = people_positive_cases_count, 
+         Difference = people_positive_new_cases_count, 
+         Deaths = people_death_new_count, 
+         Cumulative_Deaths = people_death_count, 
+         ) %>%
+  filter(country_short_name == "United States") %>% 
+  mutate(Combined_Key = paste(Admin2, Province_State, country_code, sep = ", ")) %>%  
+  left_join(pop_lookup, by = "Combined_Key") %>% 
+  mutate(Difference_pc = (Difference/Population_Count)*100000)  
+
+
+
+
+date_range2_start <- Sys.Date() - 14
+date_range2_end <- Sys.Date()
+
+
+date_range1_start <- Sys.Date() - 75
+date_range1_end <- Sys.Date() - 61
+
+
+df1 <- cc %>%  
+  select(Date, Admin2, Province_State, Difference, Difference_pc) %>%  
+  mutate(key = paste(Province_State, Admin2, sep = "_")) %>% 
+  mutate(period1 = ifelse(between(Date, date_range1_start, date_range1_end),
+                          1,0)) %>%  
+  mutate(period2 = ifelse(between(Date, date_range2_start, date_range2_end),
+                          1,0)) %>%  
+  filter(period1 == 1 | period2 == 1) %>%
+  select(-period2, -Date) %>% 
+  filter(Difference_pc > 0) %>% 
+  arrange(key, desc(period1)) %>%  
+  group_by(key, Province_State, Admin2, period1) %>%  
+  summarize(Daily_average = mean(Difference, na.rm = TRUE), Daily_average_adjusted = mean(Difference_pc, na.rm = TRUE)) %>%  
+  arrange(key, desc(period1)) %>%  
+  mutate(change = ifelse(lag(key) == key, Daily_average - lag(Daily_average))) %>% 
+  mutate(change_pc = ifelse(lag(key) == key, Daily_average_adjusted - lag(Daily_average_adjusted))) %>%  
+  select(key, change,change_pc) %>%  
+  filter(!is.na(change_pc)) %>%  
+  arrange(desc(change_pc)) %>%  
+  filter(Province_State == "South Carolina")
+
+
+
+
+```

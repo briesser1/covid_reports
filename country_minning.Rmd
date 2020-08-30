@@ -21,7 +21,7 @@ my_theme <- theme_clean()
 
 loadfonts(device = "win")
 
-number_of_countries <- 12
+number_of_countries <- 24
 number_of_countries2 <- 25
 number_of_cols <- 4
 tspan <- 120

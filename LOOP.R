@@ -132,7 +132,7 @@ rmarkdown::render(input = "Greenville_Daily_pdf.Rmd",
                   output_file = file_name7,
                   output_dir = pdf_folder)
 
-#run greenville report to pdf
+#run u repo v us to pdf
 file_name8 <- "US_V_EU.pdf"
 pdf_folder <- here::here("pdfs")
 

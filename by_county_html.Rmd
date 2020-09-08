@@ -53,6 +53,7 @@ soi <- c("Brunswick, North Carolina, US",
          "Clark, Ohio, US",
          "Licking, Ohio, US",
          "Durham, North Carolina, US",
+         "Guilford, North Carolina, US",
          "Chesterfield, Virginia, US",
          "Greenville, South Carolina, US", 
          "Forsyth, North Carolina, US", 
@@ -65,7 +66,7 @@ soi <- c("Brunswick, North Carolina, US",
 soi <- sort(soi)
 
 n_of_soi <- length(soi)
-pallet <-   paletteer::paletteer_d("basetheme::void", n = n_of_soi)
+pallet <-   paletteer::paletteer_c("pals::kovesi.cyclic_mygbm_30_95_c78_s25", n = n_of_soi)
 pallet <- as.character(pallet)
 
 soi <- data.frame(soi, pallet, stringsAsFactors = FALSE)

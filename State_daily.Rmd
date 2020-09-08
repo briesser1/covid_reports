@@ -44,7 +44,7 @@ PEOPLE_DEATH_NEW_COUNT = col_number()))   %>%
 date_of_data <-  max(cc$Date) 
 date_of_data <- format(date_of_data, "%d%B%Y")
 subtitle <- paste("Data updated on ", date_of_data, sep = "") 
-tspan <- 60
+tspan <- 180
 
 Key <- us_states$Province_State[i]
 

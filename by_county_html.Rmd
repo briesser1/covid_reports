@@ -58,7 +58,8 @@ soi <- c("Brunswick, North Carolina, US",
          "Greenville, South Carolina, US", 
          "Forsyth, North Carolina, US", 
          "Charleston, South Carolina, US", 
-         "Horry, South Carolina, US")
+         "Horry, South Carolina, US", 
+         "Orange, North Carolina")
 
 # soi <- c("Los Angeles, California", "Wake, North Carolina")
 

@@ -99,7 +99,6 @@ df1 %>%
   geom_smooth(se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0), alpha = 0.3) + 
   geom_point(aes(x = Date, y = Difference), alpha = 0.4) +
-  ylim(0, 70000) +
   my_theme +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) +

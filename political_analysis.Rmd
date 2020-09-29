@@ -142,6 +142,7 @@ df1 %>%
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
   mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  filter(Difference_pc > 0 ) %>% 
   ggplot(aes(x = Date, y = Difference_pc, group = party))  +
   geom_smooth(color = "black", se = FALSE) +
   geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 
@@ -163,6 +164,7 @@ df1 %>%
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
   mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  filter(Difference > 0) %>% 
   ggplot(aes(x = Date, y = Difference , group = party))  +
   geom_smooth(color = "black", se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0, colour = party ), alpha = .5) + 
@@ -181,7 +183,8 @@ df1 %>%
   ungroup() %>% 
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
-  mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  mutate(Province_State = fct_reorder(Province_State, order)) %>%
+  filter(Difference_pc > 0) %>% 
   ggplot(aes(x = Date, y = Difference_pc, group = party))  +
   geom_smooth(color = "black", se = FALSE) +
   geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 
@@ -204,6 +207,7 @@ df1 %>%
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
   mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  filter(Difference > 0) %>% 
   ggplot(aes(x = Date, y = Difference , group = party))  +
   geom_smooth(color = "black", se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0, colour = party ), alpha = .5) + 
@@ -229,6 +233,7 @@ df1 %>%
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
   mutate(Province_State = fct_reorder(Province_State, order)) %>% 
+  filter(Difference_pc > 0) %>% 
   ggplot(aes(x = Date, y = Difference_pc))  +
   geom_smooth(aes(colour = party), se = FALSE) +
   # geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 

@@ -148,7 +148,7 @@ df1 %>%
   geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 
   geom_point(aes(x = Date, y = Difference_pc,colour = party )) + 
   scale_color_manual(values = c("blue", "red")) +
-  facet_wrap(~Province_State, ncol = 6) +
+  facet_wrap(~Province_State, ncol = 5) +
   theme_bw() +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
@@ -170,7 +170,7 @@ df1 %>%
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0, colour = party ), alpha = .5) + 
   geom_point(aes(x = Date, y = Difference ,colour = party )) + 
   scale_color_manual(values = c("blue", "red")) +
-  facet_wrap(~Province_State, ncol = 6) +
+  facet_wrap(~Province_State, ncol = 5) +
   theme_bw() +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
@@ -179,28 +179,6 @@ df1 %>%
   labs(title = "The States on thier own", 
        subtitle = "NOT adjusted for population",
        caption = caption1)
-df1 %>% 
-  ungroup() %>% 
-  left_join(factorize_ps, by = "Province_State") %>%  
-  mutate(Province_State = as.factor(Province_State)) %>%  
-  mutate(Province_State = fct_reorder(Province_State, order)) %>%
-  filter(Difference_pc > 0) %>% 
-  ggplot(aes(x = Date, y = Difference_pc, group = party))  +
-  geom_smooth(color = "black", se = FALSE) +
-  geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party ), alpha = .5) + 
-  geom_point(aes(x = Date, y = Difference_pc,colour = party )) + 
-  scale_y_continuous(trans='log2') +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap(~Province_State, ncol = 6) +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) + 
-  labs(title = "The States on thier own - Log Scale", 
-       subtitle = "adjusted for population",
-       caption = caption1)
-
 
 df1 %>% 
   ungroup() %>% 
@@ -212,9 +190,8 @@ df1 %>%
   geom_smooth(color = "black", se = FALSE) +
   geom_segment(aes(x = Date, y = Difference , xend = Date, yend = 0, colour = party ), alpha = .5) + 
   geom_point(aes(x = Date, y = Difference ,colour = party )) + 
-  scale_y_continuous(trans='log2') +
   scale_color_manual(values = c("blue", "red")) +
-  facet_wrap(~Province_State, ncol = 6) +
+  facet_wrap(~Province_State, ncol = 3, scales = "free") +
   theme_bw() +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
@@ -249,89 +226,33 @@ df1 %>%
        subtitle = "adjusted for population",
        caption = caption1)
 ```
-
-```{r cumulative cases, fig.align = "center", fig.width = 8, fig.height=25, echo = FALSE, message=FALSE, warning=FALSE}
+```{r geofact2, fig.align = "center", fig.width = 8, fig.height=8, echo = FALSE, message=FALSE,}
+library(geofacet)
 df1 %>% 
   ungroup() %>% 
   left_join(factorize_ps, by = "Province_State") %>%  
   mutate(Province_State = as.factor(Province_State)) %>%  
   mutate(Province_State = fct_reorder(Province_State, order)) %>% 
-  ggplot(aes(x = Date, y = Cases_pc , group = party))  +
-  geom_smooth(color = "black", se = FALSE) +
-  geom_segment(aes(x = Date, y = Cases_pc , xend = Date, yend = 0, colour = party ), alpha = .5) + 
-  geom_point(aes(x = Date, y = Cases_pc ,colour = party )) + 
-  scale_y_continuous(trans='log2') +
+  filter(Difference > 0) %>% 
+  ggplot(aes(x = Date, y = Difference))  +
+  geom_smooth(aes(colour = party), se = FALSE) +
+  # geom_segment(aes(x = Date, y = Difference, xend = Date, yend = 0, colour = party ), alpha = .5) + 
+  # geom_point(aes(x = Date, y = Difference,colour = party )) + 
   scale_color_manual(values = c("blue", "red")) +
-  facet_wrap(~Province_State, ncol = 6) +
+  facet_geo(~ state_code) +
   theme_bw() +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) + 
-  labs(title = "The States on thier own - Cumulative Cases  - Log Scale", 
-       subtitle = "Adjusted for population",
+  labs(title = "The States on thier own", 
+       subtitle = " not adjusted for population",
        caption = caption1)
 ```
 
+
+
 ```{r moving average plots}
-#moving average of cases by party = unadjusted for population
-df1 %>% 
-  ggplot(aes(x = Date, y = Difference))  +
-  geom_line(aes(colour = party , group = Province_State), alpha = .25) + 
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Daily cases by party", 
-       subtitle = "",
-       caption = "")
-
-
-
-
-#moving average of cases by party = adjusted for population
-df1 %>% 
-  group_by(party, Province_State, Date) %>%  
-  ggplot(aes(x = Date, y = Difference_pc))  +
-  geom_line(aes(colour = party, group = Province_State), alpha = .25) +
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Daily cases by party adjusted by populaton", 
-       subtitle = "Daily Cases per 100,000 population",
-       caption = "")
-
-
-#moving average of cases by party = unadjusted for population new york removed
-df1 %>% 
-  filter(Province_State != "New York") %>% 
-  ggplot(aes(x = Date, y = Difference))  +
-  geom_line(aes(colour = party , group = Province_State), alpha = .25) + 
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Daily cases by party", 
-       subtitle = "New York State removed",
-       caption = "")
-
-#moving average of cases by party = adjusted for population new york removed
-df1 %>% 
-  filter(Province_State != "New York") %>% 
-  ggplot(aes(x = Date, y = Difference_pc))  +
-  geom_line(aes(colour = party, group = Province_State), alpha = .25) +
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Daily cases by party adjusted by populaton", 
-       subtitle = "New York State removed \n Daily Cases per 100,000 population",
-       caption = "")
 
 #agragated by party and adjusted for by population
 df1 %>% 
@@ -348,78 +269,6 @@ df1 %>%
        subtitle = "",
        caption = "")
 
-#agragated by party and adjusted for by population take new york out
-df1 %>% 
-  filter(Province_State != "New York") %>% 
-  group_by(party, Date) %>% 
-  summarize(Difference_pc = sum(Difference_pc)) %>% 
-  ggplot(aes(x = Date, y = Difference_pc, group = party))  +
-  geom_smooth(color = "black", se = FALSE) +
-  geom_segment(aes(x = Date, y = Difference_pc, xend = Date, yend = 0, colour = party )) + 
-  geom_point(aes(x = Date, y = Difference_pc,colour = party )) + 
-  scale_color_manual(values = c("blue", "red")) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Who makes the turn (without New York)", 
-       subtitle = "",
-       caption = "")
-
-
-#### --- cumulative deaths
-#cum deaths of cases by party = unadjusted for population
-df1 %>% 
-  ggplot(aes(x = Date, y = Cumulative_Deaths))  +
-  geom_line(aes(colour = party , group = Province_State), alpha = .25) + 
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Cumulative Fatalities, by party", 
-       subtitle = "",
-       caption = "")
-
-#cum deaths by party = adjusted for population
-df1 %>% 
-  ggplot(aes(x = Date, y = Cumulative_Deaths_pc))  +
-  geom_line(aes(colour = party, group = Province_State), alpha = .25) +
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Cumulative Fatalities, by party adjusted by populaton", 
-       subtitle = "Daily Cases per 100,000 population",
-       caption = "")
-
-
-#cum deaths by party = unadjusted for population new york removed
-df1 %>% 
-  filter(Province_State != "New York") %>% 
-  ggplot(aes(x = Date, y = Cumulative_Deaths))  +
-  geom_line(aes(colour = party , group = Province_State), alpha = .25) + 
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Cumulative Fatalities, by party", 
-       subtitle = "New York State removed",
-       caption = "")
-
-#cum deaths by party = adjusted for population new york removed
-df1 %>% 
-  filter(Province_State != "New York") %>% 
-  ggplot(aes(x = Date, y = Cumulative_Deaths_pc))  +
-  geom_line(aes(colour = party, group = Province_State), alpha = .25) +
-  geom_smooth(color = "black", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  facet_wrap( ~ party) +
-  theme_classic() +
-  theme(legend.position = "none") + 
-  labs(title = "Cumulative Fatalities, by party adjusted by populaton", 
-       subtitle = "New York State removed \n Daily Cases per 100,000 population",
-       caption = "")
 
 #agragated by party and adjusted for by population
 df1 %>% 

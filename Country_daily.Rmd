@@ -94,7 +94,7 @@ PEOPLE_DEATH_NEW_COUNT = col_number()))   %>%
 date_of_data <-  max(cc$Date) 
 date_of_data <- format(date_of_data, "%d %B %Y")
 subtitle <- paste("Data updated on ", date_of_data, sep = "") 
-tspan <- 120
+tspan <- 210
 
 table1 <- cc %>%
   filter(Country_Region %in% WesternEurope | Country_Region == "United States" | Country_Region == "Russia" | Country_Region == "Brazil" | Country_Region == "India") %>%

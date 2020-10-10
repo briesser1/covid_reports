@@ -38,31 +38,7 @@ todays_date <- d_formated
 
 
 
-##Loop 
-for (i in 1:nrow(clu)){
 
-  file_name <- paste(clu$file_name[i],  "_county_report.html", sep = "")
-
-  dir.create(here::here("county_report", new_directory))
-
-  rmarkdown::render(input = "county_daily.Rmd",
-                    output_format =  "html_document",
-                    output_file = file_name,
-                    output_dir = new_county_directory)
-}
-
-
-# us_states <- read_rds("us_states.rds")
-# #Loop
-for (i in 1:nrow(us_states)){
-  file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
-
-
-  rmarkdown::render(input = "state_daily.Rmd",
-                    output_format =  "html_document",
-                    output_file = file_name,
-                    output_dir = new_state_directory)
-}
   
 
 
@@ -143,5 +119,29 @@ rmarkdown::render(input = "US_V_EU.Rmd",
 
 
 
+# us_states <- read_rds("us_states.rds")
+#Loop
+for (i in 1:nrow(us_states)){
+  file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")
+  
+  
+  rmarkdown::render(input = "state_daily.Rmd",
+                    output_format =  "html_document",
+                    output_file = file_name,
+                    output_dir = new_state_directory)
+}
+
+##Loop 
+for (i in 1:nrow(clu)){
+  
+  file_name <- paste(clu$file_name[i],  "_county_report.html", sep = "")
+  
+  dir.create(here::here("county_report", new_directory))
+  
+  rmarkdown::render(input = "county_daily.Rmd",
+                    output_format =  "html_document",
+                    output_file = file_name,
+                    output_dir = new_county_directory)
+}
 
 

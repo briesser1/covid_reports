@@ -55,11 +55,9 @@ soi <- c("Brunswick, North Carolina, US",
          "Durham, North Carolina, US",
          "Guilford, North Carolina, US",
          "Chesterfield, Virginia, US",
-         "Greenville, South Carolina, US", 
-         "Forsyth, North Carolina, US", 
+         "Greenville, South Carolina, US",
          "Charleston, South Carolina, US", 
-         "Horry, South Carolina, US", 
-         "Orange, North Carolina")
+         "Horry, South Carolina, US")
 
 # soi <- c("Los Angeles, California", "Wake, North Carolina")
 
@@ -298,7 +296,7 @@ population_table <- soi_table %>%
   rename(Location = Combined_Key) %>% 
   arrange(desc(population)) %>% 
   mutate(population = scales::comma(population)) %>% 
-  pander()   
+  gt::gt()
   
 ```
   

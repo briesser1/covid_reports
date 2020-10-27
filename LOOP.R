@@ -57,7 +57,6 @@ rmarkdown::render(input = "country_minning.Rmd",
 
 
 
-
 #run country comparision
 file_name3 <- paste("US_V_EU_", todays_date, ".html", sep = "")
 

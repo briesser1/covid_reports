@@ -15,14 +15,15 @@ library(zoo)
 library(ggthemes)
 library(extrafont)
 library(kableExtra)
+library(lubridate)
 
 
 my_theme <- theme_clean()
 
 loadfonts(device = "win")
 
-number_of_countries <- 24
-number_of_countries2 <- 25
+number_of_countries <- 35
+number_of_countries2 <- 35
 number_of_cols <- 4
 tspan <- 120
 
@@ -60,6 +61,8 @@ PEOPLE_DEATH_NEW_COUNT = col_number()))   %>%
 
 n_reginos <- length(unique(df1$Country_Region))
 
+
+#find factor by cases
 order1 <- df1 %>% 
   ungroup() %>% 
   group_by(Country_Region) %>% 
@@ -73,6 +76,10 @@ order1 <- order1 %>%
 ungroup() %>% 
 mutate(orderv = 1:ln) %>% 
   select(-Cases)
+
+
+
+#========================================================
 
 df1 <- df1 %>% 
     left_join(order1, by = "Country_Region") %>% 
@@ -130,9 +137,31 @@ df1 %>%
 
 
 #cases per capita 
+
+
+order2 <- df1 %>% 
+  mutate(Difference_pc = (Difference/population)*100000) %>% 
+  ungroup() %>%  
+  group_by(Country_Region) %>% 
+  top_n(7, Date) %>% 
+  arrange(Country_Region, desc(Difference_pc)) %>%  
+  select(Date, Country_Region, Difference_pc) %>% 
+  group_by(Country_Region) %>%  
+  summarize(Difference_pc = mean(Difference_pc)) %>% 
+  arrange(desc(Difference_pc)) %>%  
+  select(Country_Region)
+
+
+l2 <- length(order2$Country_Region)
+
+order2 <- order2 %>% 
+  mutate(orderlvl2 = 1:l2)
+  
 df1 %>% 
   mutate(Difference_pc = (Difference/population)*100000) %>% 
   filter(!(Country_Region %in% excluded_countries)) %>% 
+  left_join(order2, by = "Country_Region") %>% 
+  mutate(Country_Region = fct_reorder(Country_Region, orderlvl2)) %>% 
   ggplot(aes(x = Date, y = Difference_pc, colour = Country_Region)) +  
   facet_wrap(~ Country_Region, ncol = number_of_cols, scales = "fixed") +
   geom_smooth(se = FALSE) +
@@ -142,7 +171,8 @@ df1 %>%
   my_theme +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Daily Cases per 100,000 people")
+  labs(title = "Daily Cases per 100,000 people", 
+       subtitle = "Arranged by most weekly-average cases per captia ")
 
 df1 %>% 
   mutate(Difference_pc = (Difference/population)*100000) %>% 

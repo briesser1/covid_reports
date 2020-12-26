@@ -128,7 +128,7 @@ update_date <- table1 %>%
 #create tables
 p_change <- table1 %>%  
   ggplot(aes(x = Date, y = percentage_change, colour = Group)) +  
-  geom_line() + 
+  geom_line(color = "black") + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   theme_classic() + 
   scale_colour_manual(values = color_set)
@@ -146,7 +146,7 @@ p1 <- table1 %>%
   filter(Date >= max(as.Date(Date)) - tspan) %>%  
   select(Group, Date, Cases, Difference) %>%  
   ggplot(aes(x = Date, y = Cases, colour = Group)) +  
-  geom_line() + 
+  geom_line(color = "black") + 
   theme_classic() +
   labs(title = "Cumulative Cases") + 
   scale_colour_manual(values = color_set)
@@ -169,7 +169,7 @@ p3 <- table1 %>%
   select(Group, Date, Cumulative_Deaths) %>%  
   ggplot(aes(x = Date, y = Cumulative_Deaths, colour = Group)) +  
   theme_classic() +
-  geom_line() + 
+  geom_line(color = "black") + 
   labs(title = "Cumulative Deaths")+ 
   scale_colour_manual(values = color_set)
 
@@ -193,7 +193,7 @@ p5 <- table1 %>%
   filter(Date >= max(as.Date(Date)) - tspan) %>%  
   select(Group, Date, Cases, Difference) %>%  
   ggplot(aes(x = Date, y = Cases, colour = Group)) +  
-  geom_line() + 
+  geom_line(color = "black") + 
  scale_y_log10(
    breaks = scales::trans_breaks("log10", function(x) 10^x),
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
@@ -213,7 +213,7 @@ p6 <- table1 %>%
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
   theme_classic() +
   annotation_logticks() +
-  geom_line() + 
+  geom_line(color = "black") + 
   labs(title = "Cumulative Deaths", subtitle = "Log Scale")+ 
   scale_colour_manual(values = color_set)
 ```

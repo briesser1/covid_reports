@@ -158,7 +158,7 @@ soi_per_new_actual <- soi_table %>%
   ggplot(aes(x = Date, y = Difference)) + 
   geom_line(aes(x = Date, y = Difference, colour = Combined_Key)) +
   scale_colour_manual(values =  jColors) +
-  ylim(0,300) +
+  ylim(0,800) +
   theme_clean() +
   theme(legend.position = "bottom",
         text = element_text(family = "Times New Roman"),

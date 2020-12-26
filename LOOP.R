@@ -25,21 +25,6 @@ dir.create(new_state_directory)
 
 todays_date <- d_formated
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++
-# this function take an html_file and outputs to pdf, 
-# this was going to be used to change html report to pdfs for easier
-# vieing on github
-#no longer needed. 
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# html_to_pdf <- function(html_file, pdf_file) {
-#   cmd <- sprintf("pandoc %s -t latex -o %s", html_file, pdf_file)
-#   system(cmd)
-# }
-
-
-
-
-  
 
 
 
@@ -118,7 +103,7 @@ rmarkdown::render(input = "US_V_EU.Rmd",
 
 
 
-# us_states <- read_rds("us_states.rds")
+us_states <- read_rds("us_states.rds")
 #Loop
 for (i in 1:nrow(us_states)){
   file_name <- paste(us_states$Province_State[i],  "_state_report.html", sep = "")

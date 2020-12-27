@@ -45,17 +45,14 @@ df2
 # run by metric -----------------------------------------------------------
 
 df3 <- daily %>%  
-  filter(state %in% c("SC", "NC" , "OH")) %>%  
+  filter(state %in% c("SC")) %>%  
   select(date,
          state,
          positive_increase,
          positive,
          total_test_results,
          hospitalized_currently,
-         on_ventilator_currently,
-         death_confirmed,
          death_increase,
-         recovered,
          in_icu_currently
   ) %>% 
   gather(metric, value, -date, -state) %>%  
@@ -63,13 +60,11 @@ df3 <- daily %>%
           geom_line() + 
           facet_wrap(~ metric, scales = "free") +
   scale_y_continuous(labels = scales::comma) +
-  theme_pubclean() +
-  theme(legend.position = "bottom") + 
-  transition_reveal(date, keep_last = FALSE)
-        
-#animate in a two step prcess 
-animate(df3, height = 800, width = 800)
-anim_save("df3.gif")
+  theme_pubclean() 
+# theme(legend.position = "bottom") + 
+#   transition_reveal(date, keep_last = FALSE)
+
+df3
   
 
 # geo facet ---------------------------------------------------------------

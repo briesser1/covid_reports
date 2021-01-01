@@ -4,6 +4,8 @@ library(ggpubr)
 library(covid19us)
 library(geofacet)
 library(gganimate)
+library(paletteer)
+
 
 #https://api.covidtracking.com/v1/states/daily.csv
 
@@ -12,7 +14,7 @@ us_pop <-
 daily <- get_states_daily()
 
 df2 <- daily %>% 
-  filter(state %in% c("SC")) %>% 
+  filter(state %in% c("CA", "NY", "IL")) %>% 
   select(date,
         state,
         positive,
@@ -45,7 +47,7 @@ df2
 # run by metric -----------------------------------------------------------
 
 df3 <- daily %>%  
-  filter(state %in% c("SC")) %>%  
+  filter(state %in% c("SC", "OH", "NC")) %>%  
   select(date,
          state,
          positive_increase,
@@ -58,8 +60,10 @@ df3 <- daily %>%
   gather(metric, value, -date, -state) %>%  
   ggplot(aes(x = date, y = value, colour = state)) + 
           geom_line() + 
+          geom_smooth(se = FALSE) + 
           facet_wrap(~ metric, scales = "free") +
   scale_y_continuous(labels = scales::comma) +
+  scale_color_paletteer_d("yarrr::southpark") +
   theme_pubclean() 
 # theme(legend.position = "bottom") + 
 #   transition_reveal(date, keep_last = FALSE)
